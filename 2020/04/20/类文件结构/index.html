@@ -79,12 +79,12 @@
 
 
 
-<meta name="description" content="1、Java虚拟机的语言无关性​    Java虚拟机不与包括Java语言在内的任何程序语言绑定，它只与“Class文件”这种特定的二进制文件格式所关联，Class文件中包含了Java虚拟机指令集、符号表以及若干其他辅助信息。基于安全方面的考虑，《Java虚拟机规范》中要求在Class文件必须应用许多强制性的语法和结构化约束，但图灵完备的字节码格式，保证了任意一门功能性语言都可以表示为一个能被Ja">
+<meta name="description" content="详解java字节码文件结构">
 <meta property="og:type" content="article">
 <meta property="og:title" content="JVM之类文件结构">
 <meta property="og:url" content="http://yoursite.com/2020/04/20/%E7%B1%BB%E6%96%87%E4%BB%B6%E7%BB%93%E6%9E%84/index.html">
 <meta property="og:site_name" content="Jchen">
-<meta property="og:description" content="1、Java虚拟机的语言无关性​    Java虚拟机不与包括Java语言在内的任何程序语言绑定，它只与“Class文件”这种特定的二进制文件格式所关联，Class文件中包含了Java虚拟机指令集、符号表以及若干其他辅助信息。基于安全方面的考虑，《Java虚拟机规范》中要求在Class文件必须应用许多强制性的语法和结构化约束，但图灵完备的字节码格式，保证了任意一门功能性语言都可以表示为一个能被Ja">
+<meta property="og:description" content="详解java字节码文件结构">
 <meta property="og:image" content="http://yoursite.com/images/jvm__no.png">
 <meta property="og:image" content="http://images/classstructure.png">
 <meta property="og:image" content="http://yoursite.com/images/constant1.png">
@@ -102,7 +102,7 @@
 <meta property="og:image" content="http://yoursite.com/images/exceptiontable.png">
 <meta property="og:image" content="http://yoursite.com/images/exception.png">
 <meta property="article:published_time" content="2020-04-19T16:00:00.000Z">
-<meta property="article:modified_time" content="2020-06-28T08:00:40.635Z">
+<meta property="article:modified_time" content="2020-06-28T08:25:02.030Z">
 <meta property="article:author" content="Jchen">
 <meta property="article:tag" content="JVM">
 <meta name="twitter:card" content="summary">
@@ -369,12 +369,10 @@
       
 
       
-        <h3 id="1、Java虚拟机的语言无关性"><a href="#1、Java虚拟机的语言无关性" class="headerlink" title="1、Java虚拟机的语言无关性"></a>1、Java虚拟机的语言无关性</h3><p>​    Java虚拟机不与包括Java语言在内的任何程序语言绑定，它只与“Class文件”这种特定的二进制文件格式所关联，Class文件中包含了Java虚拟机指令集、符号表以及若干其他辅助信息。基于安全方面的考虑，《Java虚拟机规范》中要求在Class文件必须应用许多强制性的语法和结构化约束，但图灵完备的字节码格式，保证了任意一门功能性语言都可以表示为一个能被Java虚拟机所接受的有效的Class文件。        </p>
+        <p>详解java字节码文件结构<br> <a id="more"></a></p>
+<h3 id="1、Java虚拟机的语言无关性"><a href="#1、Java虚拟机的语言无关性" class="headerlink" title="1、Java虚拟机的语言无关性"></a>1、Java虚拟机的语言无关性</h3><p>​    Java虚拟机不与包括Java语言在内的任何程序语言绑定，它只与“Class文件”这种特定的二进制文件格式所关联，Class文件中包含了Java虚拟机指令集、符号表以及若干其他辅助信息。基于安全方面的考虑，《Java虚拟机规范》中要求在Class文件必须应用许多强制性的语法和结构化约束，但图灵完备的字节码格式，保证了任意一门功能性语言都可以表示为一个能被Java虚拟机所接受的有效的Class文件。        </p>
 <ul>
-<li>​        <img src="/images/jvm__no.png" alt="JVM的语言无关性"><a id="more"></a>
-
-
-</li>
+<li>​        <img src="/images/jvm__no.png" alt="JVM的语言无关性"></li>
 </ul>
 <h3 id="2、Class类文件结构"><a href="#2、Class类文件结构" class="headerlink" title="2、Class类文件结构"></a>2、Class类文件结构</h3><ul>
 <li>Class文件是一组以8个字节为基础单位的二进制流，各个数据项目严格按照顺序紧凑地排列在文件之中，中间没有添加任何分隔符，这使得整个Class文件中存储的内容几乎全部是程序运行的必要数据，没有空隙存在。</li>
