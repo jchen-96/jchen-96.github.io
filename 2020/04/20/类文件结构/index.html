@@ -1,0 +1,949 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon.ico?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon.ico?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="JVM," />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="1、Java虚拟机的语言无关性​    Java虚拟机不与包括Java语言在内的任何程序语言绑定，它只与“Class文件”这种特定的二进制文件格式所关联，Class文件中包含了Java虚拟机指令集、符号表以及若干其他辅助信息。基于安全方面的考虑，《Java虚拟机规范》中要求在Class文件必须应用许多强制性的语法和结构化约束，但图灵完备的字节码格式，保证了任意一门功能性语言都可以表示为一个能被Ja">
+<meta property="og:type" content="article">
+<meta property="og:title" content="JVM之类文件结构">
+<meta property="og:url" content="http://yoursite.com/2020/04/20/%E7%B1%BB%E6%96%87%E4%BB%B6%E7%BB%93%E6%9E%84/index.html">
+<meta property="og:site_name" content="Jchen">
+<meta property="og:description" content="1、Java虚拟机的语言无关性​    Java虚拟机不与包括Java语言在内的任何程序语言绑定，它只与“Class文件”这种特定的二进制文件格式所关联，Class文件中包含了Java虚拟机指令集、符号表以及若干其他辅助信息。基于安全方面的考虑，《Java虚拟机规范》中要求在Class文件必须应用许多强制性的语法和结构化约束，但图灵完备的字节码格式，保证了任意一门功能性语言都可以表示为一个能被Ja">
+<meta property="og:image" content="http://yoursite.com/images/jvm__no.png">
+<meta property="og:image" content="http://images/classstructure.png">
+<meta property="og:image" content="http://yoursite.com/images/constant1.png">
+<meta property="og:image" content="http://yoursite.com/images/constant2.png">
+<meta property="og:image" content="http://yoursite.com/images/constant3.png">
+<meta property="og:image" content="http://yoursite.com/images/acc_flag.png">
+<meta property="og:image" content="http://yoursite.com/images/thisclass.png">
+<meta property="og:image" content="http://yoursite.com/images/fieldStruct.png">
+<meta property="og:image" content="http://yoursite.com/images/desc.png">
+<meta property="og:image" content="http://yoursite.com/images/methodstruct.png">
+<meta property="og:image" content="http://yoursite.com/images/attr1.png">
+<meta property="og:image" content="http://yoursite.com/images/attr2.png">
+<meta property="og:image" content="http://yoursite.com/images/attrstruct.png">
+<meta property="og:image" content="http://yoursite.com/images/codestruct.png">
+<meta property="og:image" content="http://yoursite.com/images/exceptiontable.png">
+<meta property="og:image" content="http://yoursite.com/images/exception.png">
+<meta property="article:published_time" content="2020-04-19T16:00:00.000Z">
+<meta property="article:modified_time" content="2020-06-28T08:00:40.635Z">
+<meta property="article:author" content="Jchen">
+<meta property="article:tag" content="JVM">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://yoursite.com/images/jvm__no.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2020/04/20/类文件结构/"/>
+
+
+
+
+
+  <title>JVM之类文件结构 | Jchen</title>
+  
+
+
+
+
+
+
+
+
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Jchen</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-question-circle"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-question-circle"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-question-circle"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-question-circle"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/04/20/%E7%B1%BB%E6%96%87%E4%BB%B6%E7%BB%93%E6%9E%84/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jchen">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Jchen">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">JVM之类文件结构</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-04-20T00:00:00+08:00">
+                2020-04-20
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/" itemprop="url" rel="index">
+                    <span itemprop="name">Java</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/JVM/" itemprop="url" rel="index">
+                    <span itemprop="name">JVM</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h3 id="1、Java虚拟机的语言无关性"><a href="#1、Java虚拟机的语言无关性" class="headerlink" title="1、Java虚拟机的语言无关性"></a>1、Java虚拟机的语言无关性</h3><p>​    Java虚拟机不与包括Java语言在内的任何程序语言绑定，它只与“Class文件”这种特定的二进制文件格式所关联，Class文件中包含了Java虚拟机指令集、符号表以及若干其他辅助信息。基于安全方面的考虑，《Java虚拟机规范》中要求在Class文件必须应用许多强制性的语法和结构化约束，但图灵完备的字节码格式，保证了任意一门功能性语言都可以表示为一个能被Java虚拟机所接受的有效的Class文件。        </p>
+<ul>
+<li>​        <img src="/images/jvm__no.png" alt="JVM的语言无关性"><a id="more"></a>
+
+
+</li>
+</ul>
+<h3 id="2、Class类文件结构"><a href="#2、Class类文件结构" class="headerlink" title="2、Class类文件结构"></a>2、Class类文件结构</h3><ul>
+<li>Class文件是一组以8个字节为基础单位的二进制流，各个数据项目严格按照顺序紧凑地排列在文件之中，中间没有添加任何分隔符，这使得整个Class文件中存储的内容几乎全部是程序运行的必要数据，没有空隙存在。</li>
+<li>Class文件只有两种数据类型<ul>
+<li>无符号数属于基本的数据类型，<strong>以u1、u2、u4、u8来分别代表1个字节、2个字节、4个字节和8个字节的无符号数</strong>，无符号数可以用来描述数字、索引引用、数量值或者按照UTF-8编码构成字符串值。</li>
+<li>·表是由多个无符号数或者其他表作为数据项构成的复合数据类型，为了便于区分，所有表的命名都习惯性地以“_info”结尾。表用于描述有层次关系的复合结构的数据，整个Class文件本质上也可以视作是一张表，这张表由下图所示的数据项按严格顺序排列构成。<ul>
+<li><img src="//images/classstructure.png" alt="Class文件格式"></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h4 id="1、魔数-u4"><a href="#1、魔数-u4" class="headerlink" title="1、魔数 u4"></a>1、魔数 u4</h4><ul>
+<li>开头的四个字节称为魔术 CAFEBABE,它的唯一作用是确定这个文件是否为一个能被虚拟机接受的Class文件.</li>
+</ul>
+<h4 id="2、小版本号-u2"><a href="#2、小版本号-u2" class="headerlink" title="2、小版本号 u2"></a>2、小版本号 u2</h4><h4 id="3、大版本号-u2"><a href="#3、大版本号-u2" class="headerlink" title="3、大版本号 u2"></a>3、大版本号 u2</h4><h4 id="4、常量池u2-n"><a href="#4、常量池u2-n" class="headerlink" title="4、常量池u2+n"></a>4、常量池u2+n</h4><p>​            常量池的入口需要放置一项u2类型的数据，代表常量池容量计数值（constant_pool_count）。与Java中语言习惯不同，这个容量计数是从1而不是0开始的，如图6-3所示，常量池容量（偏移地址：0x00000008）为十六进制数0x0016，即<strong>十进制的22，这就代表常量池中有21项常量</strong>，索引值范围为1～21。</p>
+<p>​            <strong>常量池中的项目类型</strong></p>
+<p><img src="/images/constant1.png" alt="常量池项目类型"></p>
+<p><img src="/images/constant2.png" alt="常量池项目类型"></p>
+<p><img src="/images/constant3.png" alt="常量池项目类型"></p>
+<h4 id="5、访问标志-u2"><a href="#5、访问标志-u2" class="headerlink" title="5、访问标志 u2"></a>5、访问标志 u2</h4><pre><code>在常量池结束之后，紧接着的2个字节代表访问标志（access_flags），这个标志用于识别一些类或者接口层次的访问信息，包括：这个Class是类还是接口；是否定义为public类型；是否定义为abstract类型；如果是类的话，是否被声明为final。</code></pre><p>​        <img src="/images/acc_flag.png" alt="访问标志"></p>
+<h4 id="6、类索引u2"><a href="#6、类索引u2" class="headerlink" title="6、类索引u2"></a>6、类索引u2</h4><p>​        当前类的全限定名称，查找过程如下</p>
+<p>​        <img src="/images/thisclass.png" alt="类索引"></p>
+<p>​    </p>
+<h4 id="7、父类索引-u2"><a href="#7、父类索引-u2" class="headerlink" title="7、父类索引 u2"></a>7、父类索引 u2</h4><p>​            当前类的父类的的全限定名称</p>
+<p>​            查找过程同上，先找到CONSTANT_Class_info 信息，再找到CONSTANT_utf8_info信息。</p>
+<h4 id="8、接口数量-u2"><a href="#8、接口数量-u2" class="headerlink" title="8、接口数量 u2"></a>8、接口数量 u2</h4><h4 id="9、接口表"><a href="#9、接口表" class="headerlink" title="9、接口表"></a>9、接口表</h4><p>n个，和类的索引一致。</p>
+<h4 id="10、字段数量-u2"><a href="#10、字段数量-u2" class="headerlink" title="10、字段数量 u2"></a>10、字段数量 u2</h4><h4 id="11、字段表"><a href="#11、字段表" class="headerlink" title="11、字段表"></a>11、字段表</h4><ul>
+<li><p>字段表结构</p>
+<ul>
+<li><img src="/images/fieldStruct.png" alt="字段表结构"></li>
+</ul>
+</li>
+<li><p>全限定名称、简单名称、描述符</p>
+<ul>
+<li><p>“org/fenixsoft/clazz/TestClass” 表示全限定名称</p>
+</li>
+<li><p>简单名称则就是指没有类型和参数修饰的方法或者字段名称。</p>
+</li>
+<li><p>描述符标识字符含义</p>
+<ul>
+<li><p><img src="/images/desc.png" alt="描述符标识符"></p>
+</li>
+<li><p>字段描述符   例如一个String类型的一维数组，“[Ljava/lang/String;“</p>
+</li>
+<li><p>方法描述符int indexOf(char[]source，intsourceOffset，int sourceCount，char[]target，int targetOffset，int targetCount，intfromIndex)</p>
+<p>的描述符为”([CII[CIII)I”</p>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>字段表所包含的固定数据项目到descriptor_index为止就全部结束了，不过在descrip-tor_index之后跟随着一个属性表集合，用于存储一些额外的信息，字段表可以在属性表中附加描述零至多项的额外信息。对于本例中的字段m，它的属性表计数器为0，也就是没有需要额外描述的信息，但是，如果将字段m的声明改为“<strong>final static int m=123；</strong>”，那就可能会存在<strong>一项名称为ConstantValue</strong>的属性，其值指向常量123。关于attribute_info的其他内容，将在6.3.7节介绍属性表的数据项目时再做进一步讲解。</p>
+</li>
+</ul>
+<h4 id="12、方法数量-u2"><a href="#12、方法数量-u2" class="headerlink" title="12、方法数量 u2"></a>12、方法数量 u2</h4><h4 id="13、方法表"><a href="#13、方法表" class="headerlink" title="13、方法表"></a>13、方法表</h4><ul>
+<li>方法表结构<ul>
+<li><img src="/images/methodstruct.png" alt="方法表结构"></li>
+<li>方法里的Java代码，经过Javac编译器编译成字节码指令之后，存放在方法属性表集合中一个名为“Code”的属性里面。</li>
+</ul>
+</li>
+</ul>
+<h4 id="14、属性表数量u2"><a href="#14、属性表数量u2" class="headerlink" title="14、属性表数量u2"></a>14、属性表数量u2</h4><h4 id="15、属性表"><a href="#15、属性表" class="headerlink" title="15、属性表"></a>15、属性表</h4><ul>
+<li><p>虚拟机预定义的属性</p>
+<p><img src="/images/attr1.png" alt=" 虚拟机规范预定义的属性"></p>
+<p><img src="/images/attr2.png" alt=" 虚拟机规范预定义的属性"></p>
+</li>
+<li><p>属性表结构</p>
+<p>​    <img src="/images/attrstruct.png" alt="属性表结构"></p>
+</li>
+</ul>
+<h5 id="1、Code属性"><a href="#1、Code属性" class="headerlink" title="1、Code属性"></a>1、Code属性</h5><ul>
+<li><p>Code属性表结构</p>
+<ul>
+<li><p><img src="/images/codestruct.png" alt="Code属性表结构"></p>
+</li>
+<li><p>max_stack: 代表了操作数栈（Operand Stack）深度的最大值</p>
+</li>
+<li><p>max_locals: 代表了局部变量表所需的存储空间。在这里，max_locals的单位是变量槽（Slot），变量槽是虚拟机为局部变量分配内存所使用的最小单位。对于byte、char、float、int、short、boolean和returnAddress等长度不超过32位的数据类型，每个局部变量占用一个变量槽，而double和long这两种64位的数据类型则需要两个变量槽来存放。</p>
+</li>
+<li><p>code_length: 用来存储Java源程序编译后生成的字节码指令。</p>
+</li>
+<li><p>异常表</p>
+<ul>
+<li><p>如果存在异常表，结构应该如下图所示</p>
+<p><img src="/images/exceptiontable.png" alt="exception table"></p>
+</li>
+<li><p>如果存在异常表，那它的格式应如表6-16所示，包含四个字段，这些<strong>字段的含义为</strong>：如果当字节码从第start_pc行[插图]到第end_pc行之间（不含第end_pc行）出现了类型为catch_type或者其子类的异常（catch_type为指向一个CONSTANT_Class_info型常量的索引），则转到第handler_pc行继续处理。当catch_type的值为0时，代表任意异常情况都需要转到handler_pc处进行处理。</p>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h5 id="2、Exception属性"><a href="#2、Exception属性" class="headerlink" title="2、Exception属性"></a>2、Exception属性</h5><ul>
+<li>不要把这个和上面的异常表弄混了</li>
+<li>Exceptions属性的作用是列举出方法中可能抛出的受查异常（CheckedExcepitons），也就是方法描述时在throws关键字后面列举的异常。</li>
+<li><img src="/images/exception.png" alt="Exception"></li>
+</ul>
+<h5 id="3、LineNumberTable属性"><a href="#3、LineNumberTable属性" class="headerlink" title="3、LineNumberTable属性"></a>3、LineNumberTable属性</h5><ul>
+<li>描述Java源码行号与字节码(字节码的偏移量)行号之间的对应关系。<strong>可以再编译时取消生成这个属性。</strong></li>
+</ul>
+<h5 id="4、LocalVariableTable"><a href="#4、LocalVariableTable" class="headerlink" title="4、LocalVariableTable"></a>4、LocalVariableTable</h5><ul>
+<li>属性用于描述栈帧中局部变量表的变量与Java源码中定义的变量之间的关系，它也不是运行时必需的属性，但默认会生成到Class文件之中，可以在Javac中使用-g：none或-g：vars选项来取消或要求生成这项信息。如果没有生成这项属性，最大的影响就是当其他人引用这个方法时，所有的参数名称都将会丢失，譬如IDE将会使用诸如arg0、arg1之类的占位符代替原有的参数名，这对程序运行没有影响，但是会对代码编写带来较大不便，而且在调试期间无法根据参数名称从上下文中获得参数值。LocalVariableTable属性的结构如表6-19所示。</li>
+</ul>
+<h3 id="3、字节码指令简介"><a href="#3、字节码指令简介" class="headerlink" title="3、字节码指令简介"></a>3、字节码指令简介</h3><ul>
+<li><p>Java虚拟机的指令由<strong>一个字节长度的、代表着某种特定操作含义的数字</strong>（称为操作码，Opcode）以及跟随其后的零至多个代表此操作所需的参数（称为操作数，Operand）构成。由于Java虚拟机采用面向操作数栈而不是面向寄存器的架构，所以大多数指令都不包含操作数，只有一个操作码，指令参数都存放在操作数栈中。</p>
+</li>
+<li><p>字节码指令集可算是一种具有鲜明特点、优势和劣势均很突出的指令集架构，<strong>由于限制了Java虚拟机操作码的长度为一个字节（即0～255），这意味着指令集的操作码总数不能够超过256条</strong>；又由于Class文件格式放弃了编译后代码的操作数长度对齐，这就意味着虚拟机<strong>在处理那些超过一个字节的数据时</strong>，不得不在运行时从字节中重建出具体数据的结构，譬如要将一个16位长度的无符号整数使用两个无符号字节存储起来。</p>
+</li>
+<li><p>不考虑异常处理的话，那Java虚拟机的解释器可以使用下面这段伪代码作为最基本的执行模型来理解，这个执行模型虽然很简单，但依然可以有效正确地工作：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">do</span>&#123;</span><br><span class="line">    自动计算pc寄存器的值加<span class="number">1</span>;</span><br><span class="line">    根据pc寄存器只是的而为之，从字节码流中取出操作码;</span><br><span class="line">    <span class="keyword">if</span>(字节码存在操作数)</span><br><span class="line">        从字节码流中读出操作数;</span><br><span class="line">    执行操作码所定义的操作;</span><br><span class="line">&#125;<span class="keyword">while</span>(字节码流长度&gt;<span class="number">0</span>);</span><br></pre></td></tr></table></figure>
+
+</li>
+</ul>
+<h4 id="1、加载和存储指令"><a href="#1、加载和存储指令" class="headerlink" title="1、加载和存储指令"></a>1、加载和存储指令</h4><h4 id="2、运算指令"><a href="#2、运算指令" class="headerlink" title="2、运算指令"></a>2、运算指令</h4><h4 id="3、类型转换指令"><a href="#3、类型转换指令" class="headerlink" title="3、类型转换指令"></a>3、类型转换指令</h4><h4 id="4、对象创建与访问指令"><a href="#4、对象创建与访问指令" class="headerlink" title="4、对象创建与访问指令"></a>4、对象创建与访问指令</h4><h4 id="5、操作栈管理指令"><a href="#5、操作栈管理指令" class="headerlink" title="5、操作栈管理指令"></a>5、操作栈管理指令</h4><h4 id="6、控制转移指令"><a href="#6、控制转移指令" class="headerlink" title="6、控制转移指令"></a>6、控制转移指令</h4><h4 id="7、方法调用和返回指令"><a href="#7、方法调用和返回指令" class="headerlink" title="7、方法调用和返回指令"></a>7、方法调用和返回指令</h4><ul>
+<li>1.invokeinterface：调用接口的方法，在运行期决定调用该接口的哪个对象的特定方法。</li>
+<li>2.invokestatic：调用静态方法</li>
+<li>3.invokespecial：调用私有方法， 构造方法（），父类的方法</li>
+<li>4.invokevirtual：调用虚方法，运行期动态查找的过程</li>
+<li>5.invokedynamic：动态调用方法</li>
+</ul>
+<h3 id="Note"><a href="#Note" class="headerlink" title="Note:"></a>Note:</h3><ul>
+<li><p>对于Java类中的每一个实例方法(非static方法) ,其在编译后所生成的字节码当中,方法参数的数量总是会比源代码中方法数的数量多一个(this) ,<br>它位于方法的第一个参数位置处;这样,我们就可以在Java的实例方法中使用this来去访问当前对象的属性以及其他方法。<br>这个操作是在编译期间完成的,即由javac编译器在编译的时候将对this的访问转化为对一个普通实例方法参数的访问;<br>接下来在运行期间由JVM在调用实例方法时,自动向实例方法传入this参数.所以,在实例方法的局部变量表中,至少会有一个指向当前对象的局部变量</p>
+</li>
+<li><p>Java字节码对于异常的处理方式：<br>1.统一采用异常表的方式来对异常进行处理；<br>2.在jdk1.4.2之前的版本中，并不是使用异常表的方式对异常进行处理的，而是采用特定的指令方式；<br>3.当异常处理存在finally语句块时，现代化的JVM采取的处理方式是将finally语句内的字节码拼接到每个catch语句块后面。<br>也就是说，程序中存在多少个catch，就存在多少个finally块的内容。</p>
+</li>
+<li><p>栈帧（stack frame）：<br>用于帮助虚拟机执行方法调用和方法执行的数据结构<br>栈帧本身是一种数据结构，封装了方法的局部变量表，动态链接信息，方法的返回地址以及操作数栈等信息。<br>符号引用：符号引用以一组符号来描述所引用的目标。符号引用可以是任何形式的字面量，只要使用时能无歧义地定位到目标即可，符号引用和虚拟机的布局无关。（在编译的时候一个每个java类都会被编译成一个class文件，但在编译的时候虚拟机并不知道所引用类的地址，多以就用符号引用来代替，而在这个解析阶段就是为了把这个符号引用转化成为真正的地址的阶段。）<br>直接引用：（1）直接指向目标的指针（指向对象，类变量和类方法的指针）（2）相对偏移量。（指向实例的变量，方法的指针）（3）一个间接定位到对象的句柄。<br>有些符号引用在加载阶段或者或是第一次使用时，转换为直接引用，这种转换叫做静态解析；另外一些符号引用则是在运行期转换为直接引用，这种转换叫做动态链接</p>
+</li>
+<li><p>静态解析的四种场景：静态方法、父类方法、构造方法、私有方法。</p>
+</li>
+<li><p>以上四种方法称为非虚方法，在类加载阶段将符号引用转换为直接引用。</p>
+</li>
+</ul>
+<h3 id="Code"><a href="#Code" class="headerlink" title="Code"></a>Code</h3><h4 id="Code1-sychronized和初始化"><a href="#Code1-sychronized和初始化" class="headerlink" title="Code1:sychronized和初始化"></a>Code1:sychronized和初始化</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * 从字节码分析得出的结论：</span></span><br><span class="line"><span class="comment"> * 成员变量的初始化是在构造方法中完成的，有多少个构造方法，初始化指令就会调用几次</span></span><br><span class="line"><span class="comment"> * 静态成员变量同样是在clinit方法完成的，不管有多少个静态变量都是在该方法完成初始化</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">ByteCodeTest2</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    String str = <span class="string">"Welcome"</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">int</span> x = <span class="number">5</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> Integer in = <span class="number">10</span>;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">ByteCodeTest2</span><span class="params">(String str)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">this</span>.str = str;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">ByteCodeTest2</span><span class="params">(String str, <span class="keyword">int</span> x)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">this</span>.str = str;</span><br><span class="line">        <span class="keyword">this</span>.x = x;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">ByteCodeTest2</span><span class="params">()</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">        ByteCodeTest2 byteCodeTest2 = <span class="keyword">new</span> ByteCodeTest2();</span><br><span class="line">        byteCodeTest2.setX(<span class="number">8</span>);</span><br><span class="line">        in = <span class="number">20</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">synchronized</span> <span class="keyword">void</span> <span class="title">setX</span><span class="params">(<span class="keyword">int</span> x)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">this</span>.x = x;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">test</span><span class="params">(String str)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">synchronized</span> (<span class="keyword">this</span>) &#123;<span class="comment">//给当前对象上锁</span></span><br><span class="line">            <span class="comment">//如果单纯的对普通函数添加sychronizede 只会在flag 里添加acc_sychronized 标志</span></span><br><span class="line">            <span class="comment">//对一个对象上锁，则在字节码中会出现mointerenter 和mointerexit</span></span><br><span class="line">            System.out.println(<span class="string">"Hello World"</span>);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//给类字节码码上锁</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">synchronized</span> <span class="keyword">void</span> <span class="title">test</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">static</span> &#123;</span><br><span class="line">        System.out.println();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="Code2-异常相关"><a href="#Code2-异常相关" class="headerlink" title="Code2:异常相关"></a>Code2:异常相关</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * 对于Java类中的每一个实例方法(非static方法) ,其在编译后所生成的字节码当中,方法参数的数量总是会比源代码中方法数的数量多一个(this) ,</span></span><br><span class="line"><span class="comment"> * 它位于方法的第一个参数位置处;这样,我们就可以在Java的实例方法中使用this来去访问当前对象的属性以及其他方法。</span></span><br><span class="line"><span class="comment"> * 这个操作是在编译期间完成的,即由javac编译器在编译的时候将对this的访问转化为对一个普通实例方法参数的访问;</span></span><br><span class="line"><span class="comment"> * 接下来在运行期间由JVM在调用实例方法时,自动向实例方法传入this参数.所以,在实例方法的局部变量表中,至少会有一个指向当前对象的局部变量</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * Java字节码对于异常的处理方式：</span></span><br><span class="line"><span class="comment"> * 1.统一采用异常表的方式来对异常进行处理；</span></span><br><span class="line"><span class="comment"> * 2.在jdk1.4.2之前的版本中，并不是使用异常表的方式对异常进行处理的，而是采用特定的指令方式；</span></span><br><span class="line"><span class="comment"> * 3.当异常处理存在finally语句块时，现代化的JVM采取的处理方式是将finally语句内的字节码拼接到每个catch语句块后面。</span></span><br><span class="line"><span class="comment"> * 也就是说，程序中存在多少个catch，就存在多少个finally块的内容。</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">ByteCodeTest3</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">test</span><span class="params">()</span> <span class="keyword">throws</span> IOException, FileNotFoundException </span>&#123;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            InputStream is = <span class="keyword">new</span> FileInputStream(<span class="string">"test.txt"</span>);</span><br><span class="line"></span><br><span class="line">            ServerSocket serverSocket = <span class="keyword">new</span> ServerSocket(<span class="number">9999</span>);</span><br><span class="line">            serverSocket.accept();</span><br><span class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> RuntimeException();</span><br><span class="line"></span><br><span class="line">        &#125; <span class="keyword">catch</span> (FileNotFoundException ex) &#123;</span><br><span class="line"></span><br><span class="line">        &#125; <span class="keyword">catch</span> (IOException ex) &#123;</span><br><span class="line"></span><br><span class="line">        &#125; <span class="keyword">catch</span> (Exception ex) &#123;</span><br><span class="line"></span><br><span class="line">        &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">            System.out.println(<span class="string">"finally"</span>);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="Code3-静态分派"><a href="#Code3-静态分派" class="headerlink" title="Code3:静态分派"></a>Code3:静态分派</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * 静态解析的四种场：静态方法、父类方法、构造方法、私有方法。</span></span><br><span class="line"><span class="comment"> * 以上四种方法称为非虚方法，在类加载阶段将符号引用转换为直接引用。</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * 方法的静态分派。</span></span><br><span class="line"><span class="comment"> * Grandpa g1 = new Father();</span></span><br><span class="line"><span class="comment"> * 以上代码, g1的静态类型是Grandpa,而g1的实际类型(真正指向的类型)是Father.</span></span><br><span class="line"><span class="comment"> * 我们可以得出这样一个结论:变量的静态类型是不会发生变化的,而变量的实际类型则是可以发生变化的(多态的一种体现)</span></span><br><span class="line"><span class="comment"> * 实际变量是在运行期方可确定</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">ByteCodeTest4</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">test</span><span class="params">(Grandpa grandpa)</span> </span>&#123;</span><br><span class="line">        System.out.println(<span class="string">"Grandpa"</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">test</span><span class="params">(Father father)</span> </span>&#123;</span><br><span class="line">        System.out.println(<span class="string">"father"</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">test</span><span class="params">(Son son)</span> </span>&#123;</span><br><span class="line">        System.out.println(<span class="string">"Son"</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">        ByteCodeTest4 byteCodeTest4 = <span class="keyword">new</span> ByteCodeTest4();</span><br><span class="line">        <span class="comment">//方法重载,是一种静态的行为,编译期就可以完全确定</span></span><br><span class="line">        <span class="comment">//重写是一种动态行为  </span></span><br><span class="line">        Grandpa g1 = <span class="keyword">new</span> Father();</span><br><span class="line">        Grandpa g2 = <span class="keyword">new</span> Son();</span><br><span class="line">        byteCodeTest4.test(g1);<span class="comment">//Grandpa</span></span><br><span class="line">        byteCodeTest4.test(g2);<span class="comment">//Grandpa</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Grandpa</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Father</span> <span class="keyword">extends</span> <span class="title">Grandpa</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Son</span> <span class="keyword">extends</span> <span class="title">Father</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> com.poplar.bytecode;</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * 静态分派的演示与证明：</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">StaticDispatch</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">static</span> <span class="keyword">abstract</span> <span class="class"><span class="keyword">class</span> <span class="title">Human</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">static</span> <span class="class"><span class="keyword">class</span> <span class="title">Man</span> <span class="keyword">extends</span> <span class="title">Human</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">static</span> <span class="class"><span class="keyword">class</span> <span class="title">Woman</span> <span class="keyword">extends</span> <span class="title">Human</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">hello</span><span class="params">(Human param)</span> </span>&#123;</span><br><span class="line">        System.out.println(<span class="string">"Hello Human"</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">hello</span><span class="params">(Man param)</span> </span>&#123;</span><br><span class="line">        System.out.println(<span class="string">"Hello Man"</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">hello</span><span class="params">(Woman param)</span> </span>&#123;</span><br><span class="line">        System.out.println(<span class="string">"Hello Woman"</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">        StaticDispatch dispatch = <span class="keyword">new</span> StaticDispatch();</span><br><span class="line">        <span class="comment">/*Human man = new Man();</span></span><br><span class="line"><span class="comment">        Human woMan = new Woman();</span></span><br><span class="line"><span class="comment">        dispatch.hello(man);</span></span><br><span class="line"><span class="comment">        dispatch.hello(woMan);*/</span></span><br><span class="line"></span><br><span class="line">        Human human = <span class="keyword">new</span> Woman();</span><br><span class="line">        human = <span class="keyword">new</span> Man();</span><br><span class="line">        dispatch.hello((Woman) human);</span><br><span class="line">        dispatch.hello((Man) human);</span><br><span class="line">        <span class="comment">//java.lang.ClassCastException: main.java.com.poplar.bytecode.WoMan cannot be cast to main.java.com.poplar.bytecode.Man</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h4 id="Code4-动态分派"><a href="#Code4-动态分派" class="headerlink" title="Code4:动态分派"></a>Code4:动态分派</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> com.poplar.bytecode;</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * 动态分派的演示与证明：</span></span><br><span class="line"><span class="comment"> * 在动态分派中虚拟机是如何知道要调用那个方法的？</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">DynamicDispatch</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">static</span> <span class="keyword">abstract</span> <span class="class"><span class="keyword">class</span> <span class="title">Human</span> </span>&#123;</span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">abstract</span> <span class="keyword">void</span> <span class="title">hello</span><span class="params">()</span></span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">static</span> <span class="class"><span class="keyword">class</span> <span class="title">Man</span> <span class="keyword">extends</span> <span class="title">Human</span> </span>&#123;</span><br><span class="line">        <span class="meta">@Override</span></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">hello</span><span class="params">()</span> </span>&#123;</span><br><span class="line">            System.out.println(<span class="string">"Hello Man"</span>);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">static</span> <span class="class"><span class="keyword">class</span> <span class="title">Woman</span> <span class="keyword">extends</span> <span class="title">Human</span> </span>&#123;</span><br><span class="line">        <span class="meta">@Override</span></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">hello</span><span class="params">()</span> </span>&#123;</span><br><span class="line">            System.out.println(<span class="string">"Hello Woman"</span>);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">        Human man = <span class="keyword">new</span> Man();</span><br><span class="line">        Human woMan = <span class="keyword">new</span> Woman();</span><br><span class="line">        man.hello();</span><br><span class="line">        woMan.hello();</span><br><span class="line"></span><br><span class="line">        man = <span class="keyword">new</span> Woman();</span><br><span class="line">        man.hello();</span><br><span class="line"></span><br><span class="line">    <span class="comment">/*public static void main(java.lang.String[]);</span></span><br><span class="line"><span class="comment">    descriptor: ([Ljava/lang/String;)V</span></span><br><span class="line"><span class="comment">    flags: ACC_PUBLIC, ACC_STATIC</span></span><br><span class="line"><span class="comment">    Code:</span></span><br><span class="line"><span class="comment">      stack=2, locals=3, args_size=1</span></span><br><span class="line"><span class="comment">         0: new           #2                  // class main/java/com/poplar/bytecode/DynamicDispatch$Man</span></span><br><span class="line"><span class="comment">         3: dup</span></span><br><span class="line"><span class="comment">         4: invokespecial #3                  // Method main/java/com/poplar/bytecode/DynamicDispatch$Man."&lt;init&gt;":()V</span></span><br><span class="line"><span class="comment">         7: astore_1</span></span><br><span class="line"><span class="comment">         8: new           #4                  // class main/java/com/poplar/bytecode/DynamicDispatch$Woman</span></span><br><span class="line"><span class="comment">        11: dup</span></span><br><span class="line"><span class="comment">        12: invokespecial #5                  // Method main/java/com/poplar/bytecode/DynamicDispatch$Woman."&lt;init&gt;":()V</span></span><br><span class="line"><span class="comment">        15: astore_2</span></span><br><span class="line"><span class="comment">        16: aload_1 从局部变量加载一个引用 aload1是加载索引为1的引用（man），局部变量有三个（0：args; 1 :man ; 2 :woMan）</span></span><br><span class="line"><span class="comment">        17: invokevirtual #6                  // Method main/java/com/poplar/bytecode/DynamicDispatch$Human.hello:()V</span></span><br><span class="line"><span class="comment">        20: aload_2 加载引用woMan</span></span><br><span class="line"><span class="comment">        21: invokevirtual #6                  // Method main/java/com/poplar/bytecode/DynamicDispatch$Human.hello:()V</span></span><br><span class="line"><span class="comment">        24: new           #4                  // class main/java/com/poplar/bytecode/DynamicDispatch$Woman</span></span><br><span class="line"><span class="comment">        27: dup</span></span><br><span class="line"><span class="comment">        28: invokespecial #5                  // Method main/java/com/poplar/bytecode/DynamicDispatch$Woman."&lt;init&gt;":()V</span></span><br><span class="line"><span class="comment">        31: astore_1</span></span><br><span class="line"><span class="comment">        32: aload_1</span></span><br><span class="line"><span class="comment">        33: invokevirtual #6                  // Method main/java/com/poplar/bytecode/DynamicDispatch$Human.hello:()V</span></span><br><span class="line"><span class="comment">        36: return</span></span><br><span class="line"><span class="comment">      LineNumberTable:</span></span><br><span class="line"><span class="comment">        line 28: 0</span></span><br><span class="line"><span class="comment">        line 29: 8</span></span><br><span class="line"><span class="comment">        line 30: 16</span></span><br><span class="line"><span class="comment">        line 31: 20</span></span><br><span class="line"><span class="comment">        line 33: 24</span></span><br><span class="line"><span class="comment">        line 34: 32</span></span><br><span class="line"><span class="comment">        line 36: 36</span></span><br><span class="line"><span class="comment">      LocalVariableTable:</span></span><br><span class="line"><span class="comment">        Start  Length  Slot  Name   Signature</span></span><br><span class="line"><span class="comment">            0      37     0  args   [Ljava/lang/String;</span></span><br><span class="line"><span class="comment">            8      29     1   man   Lmain/java/com/poplar/bytecode/DynamicDispatch$Human;</span></span><br><span class="line"><span class="comment">           16      21     2 woMan   Lmain/java/com/poplar/bytecode/DynamicDispatch$Human;</span></span><br><span class="line"><span class="comment">    &#125;</span></span><br><span class="line"><span class="comment">    invokevirtual 运行期执行的时候首先：</span></span><br><span class="line"><span class="comment">    找到操作数栈顶的第一个元素它所指向对象的实际类型，在这个类型里边，然后查找和常量里边Human的方法描述符和方法名称都一致的</span></span><br><span class="line"><span class="comment">    方法，如果在这个类型下，常量池里边找到了就会返回实际对象方法的直接引用。</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment">    如果找不到，就会按照继承体系由下往上(Man–&gt;Human–&gt;Object)查找，查找匹配的方式就是</span></span><br><span class="line"><span class="comment">    上面描述的方式，一直找到位为止。如果一直找不到就会抛出异常。</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment">    比较方法重载（overload）和方法重写（overwrite），我们可以得出这样的结论：</span></span><br><span class="line"><span class="comment">    方法重载是静态的，是编译器行为；方法重写是动态的，是运行期行为。</span></span><br><span class="line"><span class="comment">    ————————————————</span></span><br><span class="line"><span class="comment">    版权声明：本文为CSDN博主「魔鬼_」的原创文章，遵循 CC 4.0 BY-SA 版权协议，转载请附上原文出处链接及本声明。</span></span><br><span class="line"><span class="comment">    原文链接：https://blog.csdn.net/wzq6578702/article/details/82712042</span></span><br><span class="line"><span class="comment">       */</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> com.poplar.bytecode;</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * 方法的动态分派</span></span><br><span class="line"><span class="comment"> * 方法的动态分派涉及到一个重要概念:方法接收者。</span></span><br><span class="line"><span class="comment"> * invokevirtua1字节码指令的多态查找流程</span></span><br><span class="line"><span class="comment"> * 比较方法重载(overload)与方法重写(overwrite) ,我们可以得到这样一个结论:</span></span><br><span class="line"><span class="comment"> * 方法重载是静态的,是编译期行为;</span></span><br><span class="line"><span class="comment"> * 方法重写是动态的,是运行期行为。</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">ByteCodeTest5</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">        Fruit apple = <span class="keyword">new</span> Apple();</span><br><span class="line">        apple.test();<span class="comment">//&lt;com/poplar/bytecode/Fruit.test&gt;将符号引用转换为直接引用</span></span><br><span class="line"></span><br><span class="line">        Fruit orange = <span class="keyword">new</span> Orange();</span><br><span class="line">        orange.test();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Fruit</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">test</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        System.out.println(<span class="string">"Fruit"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Apple</span> <span class="keyword">extends</span> <span class="title">Fruit</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">test</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        System.out.println(<span class="string">"Apple"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Orange</span> <span class="keyword">extends</span> <span class="title">Fruit</span> </span>&#123;</span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">test</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        System.out.println(<span class="string">"Orange"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>动态分派主要由于invokevirtual 调用虚方法，事实上java里面只有虚方法存在，字段永远不可能是虚的，换句话说，字段永远不会参与多态。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Main</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">        Father f=<span class="keyword">new</span> Son();</span><br><span class="line">        System.out.println(f.a);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Father</span></span>&#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">int</span> a=<span class="number">1</span>;</span><br><span class="line">&#125;</span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Son</span> <span class="keyword">extends</span> <span class="title">Father</span></span>&#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">int</span> a=<span class="number">2</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>上面代码的输出结果为1!!!!!!!!!!!!!!!!!</p>
+<p>Note:<br><font color=red><br>invokevirtual指令的运行时解析过程大致分为以下几步：</p>
+<ul>
+<li>1）找到操作数栈顶的第一个元素所指向的对象的实际类型，记作C。</li>
+<li>2）如果在类型C中找到与常量中的描述符和简单名称都相符的方法，则进行访问权限校验，如果通过则返回这个方法的直接引用，查找过程结束；不通过则返回java.lang.IllegalAccessError异常。</li>
+<li>3）否则，按照继承关系从下往上依次对C的各个父类进行第二步的搜索和验证过程。</li>
+<li>4）如果始终没有找到合适的方法，则抛出java.lang.AbstractMethodError异常。</font>
+
+</li>
+</ul>
+<h4 id="Code5-代码执行过程示例"><a href="#Code5-代码执行过程示例" class="headerlink" title="Code5:代码执行过程示例"></a>Code5:代码执行过程示例</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> com.poplar.bytecode;</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * Created BY poplar ON 2019/12/4</span></span><br><span class="line"><span class="comment"> * 基于栈的解释器的执行过程概念模型</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">BasicStackExecutionProcess</span> </span>&#123;</span><br><span class="line"> </span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">calc</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">int</span> a = <span class="number">100</span>;</span><br><span class="line">        <span class="keyword">int</span> b = <span class="number">200</span>;</span><br><span class="line">        <span class="keyword">int</span> c = <span class="number">300</span>;</span><br><span class="line">        <span class="keyword">return</span> (a + b) * c;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/*</span></span><br><span class="line"><span class="comment">   public int calc();</span></span><br><span class="line"><span class="comment">    descriptor: ()I</span></span><br><span class="line"><span class="comment">    flags: ACC_PUBLIC</span></span><br><span class="line"><span class="comment">    Code:</span></span><br><span class="line"><span class="comment">      stack=2, locals=4, args_size=1</span></span><br><span class="line"><span class="comment">         0: bipush        100  执行地址偏移量为0 将100推送至栈顶</span></span><br><span class="line"><span class="comment">         2: istore_1          执行地址偏移量为2  将栈顶的100出栈并存放到第一个局部变量Slot中</span></span><br><span class="line"><span class="comment">         3: sipush        200</span></span><br><span class="line"><span class="comment">         6: istore_2</span></span><br><span class="line"><span class="comment">         7: sipush        300</span></span><br><span class="line"><span class="comment">        10: istore_3</span></span><br><span class="line"><span class="comment">        11: iload_1          执行地址偏移量为11 将局部变量中第一个Slot中的整型值复制到栈顶</span></span><br><span class="line"><span class="comment">        12: iload_2</span></span><br><span class="line"><span class="comment">        13: iadd            将栈顶的两个元素出栈并作整形加法，然后把结果重新入栈</span></span><br><span class="line"><span class="comment">        14: iload_3</span></span><br><span class="line"><span class="comment">        15: imul            将栈顶的两个元素出栈并作整形乘法，然后把结果重新入栈</span></span><br><span class="line"><span class="comment">        16: ireturn         结束方法并将栈顶的值返回给方法调用者</span></span><br><span class="line"><span class="comment">      LineNumberTable:</span></span><br><span class="line"><span class="comment">        line 10: 0</span></span><br><span class="line"><span class="comment">        line 11: 3</span></span><br><span class="line"><span class="comment">        line 12: 7</span></span><br><span class="line"><span class="comment">        line 13: 11</span></span><br><span class="line"><span class="comment">      LocalVariableTable:</span></span><br><span class="line"><span class="comment">        Start  Length  Slot  Name   Signature</span></span><br><span class="line"><span class="comment">            0      17     0  this   Lcom/poplar/bytecode/BasicStackExecutionProcess;</span></span><br><span class="line"><span class="comment">            3      14     1     a   I</span></span><br><span class="line"><span class="comment">            7      10     2     b   I</span></span><br><span class="line"><span class="comment">           11       6     3     c   I</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">        BasicStackExecutionProcess process = <span class="keyword">new</span> BasicStackExecutionProcess();</span><br><span class="line">        <span class="keyword">int</span> res = process.calc();</span><br><span class="line">        System.out.println(res);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+      <div>
+        <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+  <div>坚持原创技术分享，您的支持将鼓励我继续创作！</div>
+  <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+    <span>打赏</span>
+  </button>
+  <div id="QR" style="display: none;">
+
+    
+      <div id="wechat" style="display: inline-block">
+        <img id="wechat_qr" src="/images/wechat.png" alt="Jchen 微信支付"/>
+        <p>微信支付</p>
+      </div>
+    
+
+    
+      <div id="alipay" style="display: inline-block">
+        <img id="alipay_qr" src="/images/alipay.png" alt="Jchen 支付宝"/>
+        <p>支付宝</p>
+      </div>
+    
+
+    
+
+  </div>
+</div>
+
+      </div>
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/JVM/" rel="tag"># JVM</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2020/04/15/%E6%80%A7%E8%83%BD%E7%9B%91%E6%8E%A7/" rel="next" title="JVM之性能监控">
+                <i class="fa fa-chevron-left"></i> JVM之性能监控
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2020/04/22/%E7%B1%BB%E5%8A%A0%E8%BD%BD/" rel="prev" title="JVM之类加载机制">
+                JVM之类加载机制 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <p class="site-author-name" itemprop="name">Jchen</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives">
+              
+                  <span class="site-state-item-count">46</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">15</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">40</span>
+                  <span class="site-state-item-name">标签</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#1、Java虚拟机的语言无关性"><span class="nav-number">1.</span> <span class="nav-text">1、Java虚拟机的语言无关性</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2、Class类文件结构"><span class="nav-number">2.</span> <span class="nav-text">2、Class类文件结构</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1、魔数-u4"><span class="nav-number">2.1.</span> <span class="nav-text">1、魔数 u4</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2、小版本号-u2"><span class="nav-number">2.2.</span> <span class="nav-text">2、小版本号 u2</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3、大版本号-u2"><span class="nav-number">2.3.</span> <span class="nav-text">3、大版本号 u2</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#4、常量池u2-n"><span class="nav-number">2.4.</span> <span class="nav-text">4、常量池u2+n</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#5、访问标志-u2"><span class="nav-number">2.5.</span> <span class="nav-text">5、访问标志 u2</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#6、类索引u2"><span class="nav-number">2.6.</span> <span class="nav-text">6、类索引u2</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#7、父类索引-u2"><span class="nav-number">2.7.</span> <span class="nav-text">7、父类索引 u2</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#8、接口数量-u2"><span class="nav-number">2.8.</span> <span class="nav-text">8、接口数量 u2</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#9、接口表"><span class="nav-number">2.9.</span> <span class="nav-text">9、接口表</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#10、字段数量-u2"><span class="nav-number">2.10.</span> <span class="nav-text">10、字段数量 u2</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#11、字段表"><span class="nav-number">2.11.</span> <span class="nav-text">11、字段表</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#12、方法数量-u2"><span class="nav-number">2.12.</span> <span class="nav-text">12、方法数量 u2</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#13、方法表"><span class="nav-number">2.13.</span> <span class="nav-text">13、方法表</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#14、属性表数量u2"><span class="nav-number">2.14.</span> <span class="nav-text">14、属性表数量u2</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#15、属性表"><span class="nav-number">2.15.</span> <span class="nav-text">15、属性表</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#1、Code属性"><span class="nav-number">2.15.1.</span> <span class="nav-text">1、Code属性</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#2、Exception属性"><span class="nav-number">2.15.2.</span> <span class="nav-text">2、Exception属性</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#3、LineNumberTable属性"><span class="nav-number">2.15.3.</span> <span class="nav-text">3、LineNumberTable属性</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#4、LocalVariableTable"><span class="nav-number">2.15.4.</span> <span class="nav-text">4、LocalVariableTable</span></a></li></ol></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3、字节码指令简介"><span class="nav-number">3.</span> <span class="nav-text">3、字节码指令简介</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1、加载和存储指令"><span class="nav-number">3.1.</span> <span class="nav-text">1、加载和存储指令</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2、运算指令"><span class="nav-number">3.2.</span> <span class="nav-text">2、运算指令</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3、类型转换指令"><span class="nav-number">3.3.</span> <span class="nav-text">3、类型转换指令</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#4、对象创建与访问指令"><span class="nav-number">3.4.</span> <span class="nav-text">4、对象创建与访问指令</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#5、操作栈管理指令"><span class="nav-number">3.5.</span> <span class="nav-text">5、操作栈管理指令</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#6、控制转移指令"><span class="nav-number">3.6.</span> <span class="nav-text">6、控制转移指令</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#7、方法调用和返回指令"><span class="nav-number">3.7.</span> <span class="nav-text">7、方法调用和返回指令</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Note"><span class="nav-number">4.</span> <span class="nav-text">Note:</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Code"><span class="nav-number">5.</span> <span class="nav-text">Code</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Code1-sychronized和初始化"><span class="nav-number">5.1.</span> <span class="nav-text">Code1:sychronized和初始化</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Code2-异常相关"><span class="nav-number">5.2.</span> <span class="nav-text">Code2:异常相关</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Code3-静态分派"><span class="nav-number">5.3.</span> <span class="nav-text">Code3:静态分派</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Code4-动态分派"><span class="nav-number">5.4.</span> <span class="nav-text">Code4:动态分派</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Code5-代码执行过程示例"><span class="nav-number">5.5.</span> <span class="nav-text">Code5:代码执行过程示例</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; 2016 &mdash; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Jchen</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Mist</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

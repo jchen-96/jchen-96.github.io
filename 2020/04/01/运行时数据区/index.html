@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon.ico?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon.ico?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="JVM," />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="1、Java虚拟机的概览  虚拟机关键的三个元素为:类加载器、运行时数据区、执行引擎">
+<meta property="og:type" content="article">
+<meta property="og:title" content="JVM之运行时数据区">
+<meta property="og:url" content="http://yoursite.com/2020/04/01/%E8%BF%90%E8%A1%8C%E6%97%B6%E6%95%B0%E6%8D%AE%E5%8C%BA/index.html">
+<meta property="og:site_name" content="Jchen">
+<meta property="og:description" content="1、Java虚拟机的概览  虚拟机关键的三个元素为:类加载器、运行时数据区、执行引擎">
+<meta property="og:image" content="http://yoursite.com/images/jvm.png">
+<meta property="og:image" content="http://yoursite.com/images/runtimeArea.png">
+<meta property="og:image" content="http://yoursite.com/images/%E5%AF%B9%E8%B1%A1%E5%86%85%E5%AD%98%E5%B8%83%E5%B1%80.png">
+<meta property="og:image" content="http://yoursite.com/images%5C%E5%AF%B9%E8%B1%A1%E5%A4%B4.png">
+<meta property="og:image" content="http://yoursite.com/images/%E5%AF%B9%E8%B1%A1%E7%9A%84%E8%AE%BF%E9%97%AE%E6%96%B9%E5%BC%8F.png">
+<meta property="article:published_time" content="2020-03-31T16:00:00.000Z">
+<meta property="article:modified_time" content="2020-06-28T08:00:17.147Z">
+<meta property="article:author" content="Jchen">
+<meta property="article:tag" content="JVM">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://yoursite.com/images/jvm.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2020/04/01/运行时数据区/"/>
+
+
+
+
+
+  <title>JVM之运行时数据区 | Jchen</title>
+  
+
+
+
+
+
+
+
+
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Jchen</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-question-circle"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-question-circle"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-question-circle"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-question-circle"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/04/01/%E8%BF%90%E8%A1%8C%E6%97%B6%E6%95%B0%E6%8D%AE%E5%8C%BA/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jchen">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Jchen">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">JVM之运行时数据区</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-04-01T00:00:00+08:00">
+                2020-04-01
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/" itemprop="url" rel="index">
+                    <span itemprop="name">Java</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/JVM/" itemprop="url" rel="index">
+                    <span itemprop="name">JVM</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h3 id="1、Java虚拟机的概览"><a href="#1、Java虚拟机的概览" class="headerlink" title="1、Java虚拟机的概览"></a>1、Java虚拟机的概览</h3><p><img src="/images/jvm.png" alt="虚拟机概览"></p>
+<ul>
+<li><p>虚拟机关键的三个元素为:<strong>类加载器、运行时数据区、执行引擎</strong></p>
+<a id="more"></a>
+
+</li>
+</ul>
+<h3 id="2、运行时数据区域"><a href="#2、运行时数据区域" class="headerlink" title="2、运行时数据区域"></a>2、运行时数据区域</h3><p><img src="/images/runtimeArea.png" alt="运行时数据区"></p>
+<ul>
+<li><p>运行时常量池是方法区的一部分。<strong>Class文件的常量表，在类加载之后回统一</strong>存放到运行时的常量池中。</p>
+</li>
+<li><p>PC是当前线程所执行字节码的<strong>行号</strong>指示器，它是程序控制流的指示器，分支、循环、跳转、异常处理、线程恢复等基础功能都是依赖这个计数器来完成的。<strong>这个内存区域是唯一一个在《Java虚拟机规范》中没有规定任何OOM的情况。</strong></p>
+</li>
+<li><p>栈帧</p>
+<ul>
+<li>是进出虚拟机栈的基本单位</li>
+<li>每个方法都有一个栈帧，用于存储局部变量表、操作数栈、动态连接、方法出口等信息。</li>
+<li>局部变量存放了编译器可知的各种Java虚拟机的基本类型，对象引用类型(reference类型，它并不等同对象本身，可能是指向对象起始地址的引用指针，也可能是指向一个代表对象句柄或者与此相关的对象的位置)。<strong>这些数据类型在局部变量表中以slot来表示。一个slot 32个bit位。</strong></li>
+</ul>
+</li>
+<li><p>本地方法栈</p>
+<ul>
+<li>执行本地方法的栈，java虚拟机没有规定形式，在hotspot中，本地方法栈和虚拟机栈合二为一。</li>
+</ul>
+</li>
+<li><p>方法区是虚拟机的规范，在内存中的形式由具体的虚拟机自行确定。在hotspot 1.8之前，在内存中是永久代，在1.8及之后，则变成了元空间(metaSpace)。</p>
+<ul>
+<li><strong>元空间，包含类的信息，以及常量池等。</strong></li>
+</ul>
+</li>
+<li><p>直接内存</p>
+<ul>
+<li>由native方法分配的堆外内存</li>
+<li>NIO：使用native函数直接分配堆外内存，然后通过一个存储在Java堆里面的DirectByteBuffer对象作为这块内存的引用进行操作。这样能在一些场景中，提高性能，避免了在Java堆中和nativa堆中来回复制数据。</li>
+</ul>
+</li>
+</ul>
+<h3 id="3、对象"><a href="#3、对象" class="headerlink" title="3、对象"></a>3、对象</h3><h4 id="1、对象的创建过程"><a href="#1、对象的创建过程" class="headerlink" title="1、对象的创建过程"></a>1、对象的创建过程</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">        Object o=<span class="keyword">new</span> Object();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>对应的字节码指令</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">0 new #2 &lt;java/lang/Object&gt;    //为对象分配内存，并将值进行初始化(设置为各类型的默认值)</span><br><span class="line"><span class="number">3</span> dup						   <span class="comment">//</span></span><br><span class="line">4 invokespecial #1 &lt;java/lang/Object.&lt;init&gt;&gt;  //调用构造方法进行初始化</span><br><span class="line"><span class="number">7</span> astore_1     								<span class="comment">//返回给局部变量的指针，将变量的引用和对象关联起来</span></span><br><span class="line"><span class="number">8</span> <span class="keyword">return</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>dup的来源:</strong></p>
+<p>然后因为invokespecial会消耗掉操作数栈顶的引用作为传给构造器的“this”参数，所以如果我们希望在invokespecial调用后在操作数栈顶还维持有一个指向新建对象的引用，就得在invokespecial之前先“复制”一份引用——这就是这个dup的来源。</p>
+<h5 id="引申-单例模式为什么要加volatile"><a href="#引申-单例模式为什么要加volatile" class="headerlink" title="引申:单例模式为什么要加volatile"></a>引申:单例模式为什么要加volatile</h5><p>单例模式的DLC写法</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">volatile</span> Sig instance;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="title">Sig</span><span class="params">()</span></span>&#123;&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//双重检查的单例模式</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> Object <span class="title">getInstance</span><span class="params">()</span></span>&#123;</span><br><span class="line">    <span class="keyword">if</span>(instance==<span class="keyword">null</span>)&#123;</span><br><span class="line">        <span class="comment">//双重检查</span></span><br><span class="line">        sychronized(Object<span class="class">.<span class="keyword">class</span>)</span>&#123;</span><br><span class="line">            <span class="keyword">if</span>(instance==<span class="keyword">null</span>)&#123;</span><br><span class="line">                <span class="keyword">try</span>&#123;</span><br><span class="line">                    Thread.sleep(<span class="number">1</span>);</span><br><span class="line">                &#125;<span class="keyword">catch</span>(InterruptedException e)&#123;</span><br><span class="line">                    e.printStackTrace();</span><br><span class="line">                &#125;</span><br><span class="line">                instance =<span class="keyword">new</span> Object();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> instance;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>因为如果不加volatile 存在指令重排的可能，正常的对象创建顺序是，先执行构造函数初始化，再返回对象的引用给局部变量，但是由于指令重排的原因，可能先返回对象的引用，再初始化，就可能导致返回了未正确初始化的变量。</p>
+<h4 id="2、对象的内存布局"><a href="#2、对象的内存布局" class="headerlink" title="2、对象的内存布局"></a>2、对象的内存布局</h4><p>一个实例对象在啊内存中包含四部分信息。</p>
+<p><img src="/images/%E5%AF%B9%E8%B1%A1%E5%86%85%E5%AD%98%E5%B8%83%E5%B1%80.png" alt="对象的内存布局"></p>
+<ul>
+<li><p>markword记录了锁信息和GC信息</p>
+</li>
+<li><p>class pointer 对象指针，指向 ClassName.class，属于哪个class</p>
+</li>
+<li><p>实例数据</p>
+</li>
+<li><p>padding,对其，<strong>整体字节不能被8整除</strong>，会进行对齐。</p>
+<p>Note:</p>
+<p><strong>64位的JVM会默认把class指针压缩到4个字节。</strong></p>
+<p><strong>ops普通对象指针，一个对象里面有其他对象，也会被压缩</strong></p>
+<p>markword 8字节</p>
+<p>classpointer 4个字节(压缩之后)。</p>
+</li>
+</ul>
+<h5 id="Markword的状态表"><a href="#Markword的状态表" class="headerlink" title="Markword的状态表"></a>Markword的状态表</h5><p><img src="/images%5C%E5%AF%B9%E8%B1%A1%E5%A4%B4.png" alt="对象头"></p>
+<h4 id="3、对象的访问定位"><a href="#3、对象的访问定位" class="headerlink" title="3、对象的访问定位"></a>3、对象的访问定位</h4><p>​    Java程序会通过栈上的reference数据来操作堆上的具体对象。由于reference类型在，Java虚拟机规范中，只规定它是一个对象的引用，并没有定义这个引用应该通过什么方式去定位，访问到堆中的对象的具体位置，所以，对象的访问方式由虚拟机的实现而定，主流的访问方式主要有，使用句柄和直接指针</p>
+<ul>
+<li><p>·如果使用句柄访问的话，Java堆中将可能会划分出一块内存来作为句柄池，reference中存储的就是对象的句柄地址，而句柄中包含了对象实例数据与类型数据各自具体的地址信息。</p>
+</li>
+<li><p>·如果使用直接指针访问的话，Java堆中对象的内存布局就必须考虑如何放置访问类型数据的相关信息，reference中存储的直接就是对象地址，如果只是访问对象本身的话，就不需要多一次间接访问的开销，</p>
+</li>
+</ul>
+<p>这两种对象访问方式各有优势，使用句柄来访问的最大好处就是reference中存储的是稳定句柄地址，在对象被移动（垃圾收集时移动对象是非常普遍的行为）时只会改变句柄中的实例数据指针，而reference本身不需要被修改。</p>
+<p><img src="/images/%E5%AF%B9%E8%B1%A1%E7%9A%84%E8%AE%BF%E9%97%AE%E6%96%B9%E5%BC%8F.png" alt="对象的访问方式"></p>
+<h3 id="4、实战"><a href="#4、实战" class="headerlink" title="4、实战"></a>4、实战</h3><h4 id="1、堆内存溢出"><a href="#1、堆内存溢出" class="headerlink" title="1、堆内存溢出"></a>1、堆内存溢出</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * VM Args：-Xms20m -Xmx20m -XX:+HeapDumpOnOutOfMemoryError</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">HeapOOM</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">static</span> <span class="class"><span class="keyword">class</span> <span class="title">OOMObject</span> </span>&#123;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">        List&lt;OOMObject&gt; list = <span class="keyword">new</span> ArrayList&lt;OOMObject&gt;();</span><br><span class="line"></span><br><span class="line">        <span class="keyword">while</span> (<span class="keyword">true</span>) &#123;</span><br><span class="line">            list.add(<span class="keyword">new</span> OOMObject());</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="2、虚拟机栈和本地方法栈溢出"><a href="#2、虚拟机栈和本地方法栈溢出" class="headerlink" title="2、虚拟机栈和本地方法栈溢出"></a>2、虚拟机栈和本地方法栈溢出</h4><p>虚拟机栈溢出两种可能</p>
+<ul>
+<li>栈帧太大</li>
+<li>栈空间太小</li>
+</ul>
+<p>栈空间太小</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * VM Args：-Xss128k</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">JavaVMStackSOF_1</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">int</span> stackLength = <span class="number">1</span>;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">stackLeak</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        stackLength++;</span><br><span class="line">        stackLeak();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">        JavaVMStackSOF_1 oom = <span class="keyword">new</span> JavaVMStackSOF_1();</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            oom.stackLeak();</span><br><span class="line">        &#125; <span class="keyword">catch</span> (Throwable e) &#123;</span><br><span class="line">            System.out.println(<span class="string">"stack length:"</span> + oom.stackLength);</span><br><span class="line">            <span class="keyword">throw</span> e;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>栈帧太大</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> com.jchen.byteCode;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">newClass</span> </span>&#123;</span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * VM: JDK 1.0.2, Sun Classic VM</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">int</span> stackLength = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">test</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">long</span> unused1, unused2, unused3, unused4, unused5,</span><br><span class="line">                unused6, unused7, unused8, unused9, unused10,</span><br><span class="line">                unused11, unused12, unused13, unused14, unused15,</span><br><span class="line">                unused16, unused17, unused18, unused19, unused20,</span><br><span class="line">                unused21, unused22, unused23, unused24, unused25,</span><br><span class="line">                unused26, unused27, unused28, unused29, unused30,</span><br><span class="line">                unused31, unused32, unused33, unused34, unused35,</span><br><span class="line">                unused36, unused37, unused38, unused39, unused40,</span><br><span class="line">                unused41, unused42, unused43, unused44, unused45,</span><br><span class="line">                unused46, unused47, unused48, unused49, unused50,</span><br><span class="line">                unused51, unused52, unused53, unused54, unused55,</span><br><span class="line">                unused56, unused57, unused58, unused59, unused60,</span><br><span class="line">                unused61, unused62, unused63, unused64, unused65,</span><br><span class="line">                unused66, unused67, unused68, unused69, unused70,</span><br><span class="line">                unused71, unused72, unused73, unused74, unused75,</span><br><span class="line">                unused76, unused77, unused78, unused79, unused80,</span><br><span class="line">                unused81, unused82, unused83, unused84, unused85,</span><br><span class="line">                unused86, unused87, unused88, unused89, unused90,</span><br><span class="line">                unused91, unused92, unused93, unused94, unused95,</span><br><span class="line">                unused96, unused97, unused98, unused99, unused100;</span><br><span class="line"></span><br><span class="line">        stackLength++;</span><br><span class="line">        test();</span><br><span class="line"></span><br><span class="line">        unused1 = unused2 = unused3 = unused4 = unused5 =</span><br><span class="line">                unused6 = unused7 = unused8 = unused9 = unused10 =</span><br><span class="line">                        unused11 = unused12 = unused13 = unused14 = unused15 =</span><br><span class="line">                                unused16 = unused17 = unused18 = unused19 = unused20 =</span><br><span class="line">                                        unused21 = unused22 = unused23 = unused24 = unused25 =</span><br><span class="line">                                                unused26 = unused27 = unused28 = unused29 = unused30 =</span><br><span class="line">                                                        unused31 = unused32 = unused33 = unused34 = unused35 =</span><br><span class="line">                                                                unused36 = unused37 = unused38 = unused39 = unused40 =</span><br><span class="line">                                                                        unused41 = unused42 = unused43 = unused44 = unused45 =</span><br><span class="line">                                                                                unused46 = unused47 = unused48 = unused49 = unused50 =</span><br><span class="line">                                                                                        unused51 = unused52 = unused53 = unused54 = unused55 =</span><br><span class="line">                                                                                                unused56 = unused57 = unused58 = unused59 = unused60 =</span><br><span class="line">                                                                                                        unused61 = unused62 = unused63 = unused64 = unused65 =</span><br><span class="line">                                                                                                                unused66 = unused67 = unused68 = unused69 = unused70 =</span><br><span class="line">                                                                                                                        unused71 = unused72 = unused73 = unused74 = unused75 =</span><br><span class="line">                                                                                                                                unused76 = unused77 = unused78 = unused79 = unused80 =</span><br><span class="line">                                                                                                                                        unused81 = unused82 = unused83 = unused84 = unused85 =</span><br><span class="line">                                                                                                                                                unused86 = unused87 = unused88 = unused89 = unused90 =</span><br><span class="line">                                                                                                                                                        unused91 = unused92 = unused93 = unused94 = unused95 =</span><br><span class="line">                                                                                                                                                                unused96 = unused97 = unused98 = unused99 = unused100 = <span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    </span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            test();</span><br><span class="line">        &#125; <span class="keyword">catch</span> (Error e) &#123;</span><br><span class="line">            System.out.println(<span class="string">"stack length:"</span> + stackLength);</span><br><span class="line">            <span class="keyword">throw</span> e;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>注:</strong></p>
+<p>对于不同版本的Java虚拟机和不同的操作系统，栈容量的最小值可能会有所限制。</p>
+<p><strong>实验表明：</strong></p>
+<p>无论是栈帧太大还是虚拟机栈容量太小，当新的栈帧内存无法分配的时候，hotspot虚拟机抛出的都是StackOverflowError异常。</p>
+<h4 id="3、方法区和运行时常量池溢出"><a href="#3、方法区和运行时常量池溢出" class="headerlink" title="3、方法区和运行时常量池溢出"></a>3、方法区和运行时常量池溢出</h4><h5 id="常量池溢出"><a href="#常量池溢出" class="headerlink" title="常量池溢出"></a>常量池溢出</h5><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * VM Args：-XX:PermSize=6M -XX:MaxPermSize=6M//这里限制永久代大小，在jdk1.7+没用，因为一处了永久代</span></span><br><span class="line"><span class="comment"> * 应该设置堆大小-Xmx6m</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">RuntimeConstantPoolOOM_1</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">        <span class="comment">// 使用Set保持着常量池引用，避免Full GC回收常量池行为</span></span><br><span class="line">        Set&lt;String&gt; set = <span class="keyword">new</span> HashSet&lt;String&gt;();</span><br><span class="line">        <span class="comment">// 在short范围内足以让6MB的PermSize产生OOM了</span></span><br><span class="line">        <span class="keyword">short</span> i = <span class="number">0</span>;</span><br><span class="line">        <span class="keyword">while</span> (<span class="keyword">true</span>) &#123;</span><br><span class="line">            set.add(String.valueOf(i++).intern());</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>字符串在常量池，常量池按理说是在永久代，永久代移除之后，应该在元空间，元空间的jvm参数并不是Xmx，那这里怎么会溢出？</strong></p>
+<p>！！！！常量池在 jdk1.6（含）之前也是方法区（永久代）的一部分，并且其中只能够存放字符串的实例； 常量池在 jdk1.7（含）之后是在堆内存之中，可以存储的是字符串对象的实例和堆内存中字符串对象的引用； jdk1.8 已移除永久代，字符串常量池还是在堆内存当中。</p>
+<p>字符串常量池相关：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">RuntimeConstantPoolOOM_2</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">        String str1 = <span class="keyword">new</span> StringBuilder(<span class="string">"计算机"</span>).append(<span class="string">"软件"</span>).toString();</span><br><span class="line">        System.out.println(str1.intern() == str1);</span><br><span class="line"></span><br><span class="line">        String str2 = <span class="keyword">new</span> StringBuilder(<span class="string">"ja"</span>).append(<span class="string">"va"</span>).toString();</span><br><span class="line">        System.out.println(str2.intern() == str2);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><p>这段代码在JDK 6中运行，会得到两个false，而在JDK 7中运行，会得到一个true和一个false。产生差异的原因是，在JDK 6中，intern()方法会把首次遇到的字符串实例复制到永久代的字符串常量池中存储，返回的也是永久代里面这个字符串实例的引用，而由StringBuilder创建的字符串对象实例在Java堆上，所以必然不可能是同一个引用，结果将返回false。</p>
+</li>
+<li><p>而JDK 7（以及部分其他虚拟机，例如JRockit）的intern()方法实现就不需要再拷贝字符串的实例到永久代了，既然字符串常量池已经移到Java堆中，那只需要在常量池里记录一下首次出现的实例引用即可，因此intern()返回的引用和由StringBuilder创建的那个字符串实例就是同一个。而对str2比较返回false，这是因为“java”[插图]这个字符串在执行String-Builder.toString()之前就已经出现过了，字符串常量池中已经有它的引用，不符合intern()方法要求“首次遇到”的原则，“计算机软件”这个字符串则是首次出现的，因此结果返回true。</p>
+</li>
+</ul>
+<p>intern 方法</p>
+<p><strong>String::intern()是一个本地方法，它的作用是如果字符串常量池中已经包含一个等于此String对象的字符串，则返回代表池中这个字符串的String对象的引用；否则，会将此String对象包含的字符串添加到常量池中，并且返回此String对象的引用。</strong></p>
+<h5 id="元空间溢出"><a href="#元空间溢出" class="headerlink" title="元空间溢出"></a><strong>元空间溢出</strong></h5><p>使用cglib动态生成类</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> net.sf.cglib.proxy.Enhancer;</span><br><span class="line"><span class="keyword">import</span> net.sf.cglib.proxy.MethodInterceptor;</span><br><span class="line"><span class="keyword">import</span> net.sf.cglib.proxy.MethodProxy;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> java.lang.reflect.Method;</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * VM Args： -XX:MaxMetaspaceSize=20M</span></span><br><span class="line"><span class="comment"> </span></span><br><span class="line"><span class="comment"> *-XX:MetaspaceSize 指定元空间初始的大小</span></span><br><span class="line"><span class="comment"> *-XX:MinMetaspaceFreeRatio</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">JavaMethodAreaOOM</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">while</span> (<span class="keyword">true</span>) &#123;</span><br><span class="line">            Enhancer enhancer = <span class="keyword">new</span> Enhancer();</span><br><span class="line">            enhancer.setSuperclass(OOMObject<span class="class">.<span class="keyword">class</span>)</span>;</span><br><span class="line">            enhancer.setUseCache(<span class="keyword">false</span>);</span><br><span class="line">            enhancer.setCallback(<span class="keyword">new</span> MethodInterceptor() &#123;</span><br><span class="line">                <span class="function"><span class="keyword">public</span> Object <span class="title">intercept</span><span class="params">(Object obj, Method method, Object[] args, MethodProxy proxy)</span> <span class="keyword">throws</span> Throwable </span>&#123;</span><br><span class="line">                    <span class="keyword">return</span> proxy.invokeSuper(obj, args);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;);</span><br><span class="line">            enhancer.create();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">static</span> <span class="class"><span class="keyword">class</span> <span class="title">OOMObject</span> </span>&#123;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="4、本机内存直接溢出"><a href="#4、本机内存直接溢出" class="headerlink" title="4、本机内存直接溢出"></a>4、本机内存直接溢出</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> sun.misc.Unsafe;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> java.lang.reflect.Field;</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * VM Args：-Xmx20M -XX:MaxDirectMemorySize=10M</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">DirectMemoryOOM</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> _1MB = <span class="number">1024</span> * <span class="number">1024</span>;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">        Field unsafeField = Unsafe.class.getDeclaredFields()[0];</span><br><span class="line">        unsafeField.setAccessible(<span class="keyword">true</span>);</span><br><span class="line">        Unsafe unsafe = (Unsafe) unsafeField.get(<span class="keyword">null</span>);</span><br><span class="line">        <span class="keyword">while</span> (<span class="keyword">true</span>) &#123;</span><br><span class="line">            unsafe.allocateMemory(_1MB);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>由直接内存导致的内存溢出，一个明显的特征是在Heap Dump文件中不会看见有什么明显的异常情况，如果读者发现内存溢出之后产生的Dump文件很小，而程序中又直接或间接使用了DirectMemory（典型的间接使用就是NIO），那就可以考虑重点检查一下直接内存方面的原因了。</p>
+<pre><code>对于一个64为的服务器端的JVM 来说，其默认的-XX:MetaspaceSize 值为21MB,这就是初始的高水位线。一旦触及到这个水位线，Full GC 将会被触发并卸载没用的类(即这些了对应的类加载器不再存活)，然后这个高水位线将会重置。新的高水位线的值取决于GC后释放了多少元空间。如果释放的空间不足，这个高水位线会上升 ，反之则会下降。如果初始的高水位线设置过低，上述高水位线调整情况会发生很多次。通过垃圾回收器的日志我们可以观察到Full GC 多次调用，为了避免频繁的GC 建议将-XX:Metaspace设置为一个相对较高的值。</code></pre>
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+      <div>
+        <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+  <div>坚持原创技术分享，您的支持将鼓励我继续创作！</div>
+  <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+    <span>打赏</span>
+  </button>
+  <div id="QR" style="display: none;">
+
+    
+      <div id="wechat" style="display: inline-block">
+        <img id="wechat_qr" src="/images/wechat.png" alt="Jchen 微信支付"/>
+        <p>微信支付</p>
+      </div>
+    
+
+    
+      <div id="alipay" style="display: inline-block">
+        <img id="alipay_qr" src="/images/alipay.png" alt="Jchen 支付宝"/>
+        <p>支付宝</p>
+      </div>
+    
+
+    
+
+  </div>
+</div>
+
+      </div>
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/JVM/" rel="tag"># JVM</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/12/31/%E5%8F%88%E6%98%AF%E4%B8%80%E5%B9%B4/" rel="next" title="又是一年">
+                <i class="fa fa-chevron-left"></i> 又是一年
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2020/04/03/%E5%AD%A6%E4%B9%A0%E6%96%B9%E6%B3%95/" rel="prev" title="学习方法">
+                学习方法 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <p class="site-author-name" itemprop="name">Jchen</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives">
+              
+                  <span class="site-state-item-count">46</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">15</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">40</span>
+                  <span class="site-state-item-name">标签</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#1、Java虚拟机的概览"><span class="nav-number">1.</span> <span class="nav-text">1、Java虚拟机的概览</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2、运行时数据区域"><span class="nav-number">2.</span> <span class="nav-text">2、运行时数据区域</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3、对象"><span class="nav-number">3.</span> <span class="nav-text">3、对象</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1、对象的创建过程"><span class="nav-number">3.1.</span> <span class="nav-text">1、对象的创建过程</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#引申-单例模式为什么要加volatile"><span class="nav-number">3.1.1.</span> <span class="nav-text">引申:单例模式为什么要加volatile</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2、对象的内存布局"><span class="nav-number">3.2.</span> <span class="nav-text">2、对象的内存布局</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#Markword的状态表"><span class="nav-number">3.2.1.</span> <span class="nav-text">Markword的状态表</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3、对象的访问定位"><span class="nav-number">3.3.</span> <span class="nav-text">3、对象的访问定位</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4、实战"><span class="nav-number">4.</span> <span class="nav-text">4、实战</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1、堆内存溢出"><span class="nav-number">4.1.</span> <span class="nav-text">1、堆内存溢出</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2、虚拟机栈和本地方法栈溢出"><span class="nav-number">4.2.</span> <span class="nav-text">2、虚拟机栈和本地方法栈溢出</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3、方法区和运行时常量池溢出"><span class="nav-number">4.3.</span> <span class="nav-text">3、方法区和运行时常量池溢出</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#常量池溢出"><span class="nav-number">4.3.1.</span> <span class="nav-text">常量池溢出</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#元空间溢出"><span class="nav-number">4.3.2.</span> <span class="nav-text">元空间溢出</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#4、本机内存直接溢出"><span class="nav-number">4.4.</span> <span class="nav-text">4、本机内存直接溢出</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; 2016 &mdash; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Jchen</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Mist</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
